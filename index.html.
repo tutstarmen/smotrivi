@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmotriVi — Просмотр и скачивание видео по прямой ссылке</title>
+    <style>
+        :root {
+            --bg-color: #0f0f15;
+            --container-bg: #161622;
+            --accent-primary: #ff0055;
+            --accent-secondary: #00f0ff;
+            --text-main: #ffffff;
+            --text-muted: #8f8f9d;
+            --input-bg: #222232;
+            --border-color: #2e2e42;
+            --error-color: #ff4d4d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 15px;
+        }
+
+        .wrapper {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0 10px 0;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .tagline {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .adv-banner {
+            background: linear-gradient(135deg, rgba(255, 0, 85, 0.05), rgba(0, 240, 255, 0.05));
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .adv-banner::before {
+            content: "РЕКЛАМА";
+            position: absolute;
+            top: 5px;
+            left: 8px;
+            font-size: 9px;
+            font-weight: bold;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        .adv-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #fff;
+        }
+
+        .adv-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .adv-btn {
+            display: inline-block;
+            background: transparent;
+            border: 1px solid var(--accent-secondary);
+            color: var(--accent-secondary);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .adv-btn:hover {
+            background: var(--accent-secondary);
+            color: var(--bg-color);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+        }
+
+        .main-card {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 25px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            background-color: var(--input-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--accent-primary);
+        }
+
+        input[type="url"] {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: 14px 16px;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        input[type="url"]::placeholder {
+            color: #555565;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, var(--accent-primary), #d00045);
+            color: #fff;
+            border: none;
+            outline: none;
+            padding: 0 20px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .action-btn:hover {
+            opacity: 0.9;
+        }
+
+        .hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .error-msg {
+            display: none;
+            background: rgba(255, 77, 77, 0.1);
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+
+        .result-box {
+            display: none;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            margin-top: 20px;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .video-player-container {
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .video-player-container video {
+            width: 100%;
+            max-height: 400px;
+            display: block;
+        }
+
+        .download-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .download-button {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+        }
+
+        .download-button:hover {
+            background-color: var(--border-color);
+        }
+
+        .download-button .quality {
+            background-color: rgba(0, 240, 255, 0.1);
+            color: var(--accent-secondary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .info-section {
+            margin-top: 25px;
+            background: rgba(22, 22, 34, 0.4);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(46, 46, 66, 0.5);
+        }
+
+        .info-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .info-section ul {
+            list-style: none;
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .info-section li::before {
+            content: "• ";
+            color: var(--accent-primary);
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px 0 10px 0;
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(46, 46, 66, 0.3);
+            margin-top: 30px;
+        }
+
+        footer p {
+            margin-bottom: 5px;
+        }
+
+        footer a {
+            color: var(--accent-secondary);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wrapper">
+        <header>
+            <div class="logo">SmotriVi</div>
+            <div class="tagline">Просмотр и скачивание видео по прямой ссылке на файл</div>
+        </header>
+
+        <div class="adv-banner">
+            <div class="adv-title">Здесь может быть ваша реклама</div>
+            <div class="adv-desc">Тысячи пользователей увидят ваш продукт на SmotriVi. Высокий CTR, гибкие условия.</div>
+            <a href="mailto:sotrivi.support@gmail.com?subject=Заказ рекламы на SmotriVi (Верхний баннер)" class="adv-btn">Разместить объявление</a>
+        </div>
+
+        <main class="main-card">
+            <div class="input-group">
+                <label for="video-url">Вставьте прямую ссылку на видеофайл:</label>
+                <div class="input-wrapper">
+                    <input type="url" id="video-url" placeholder="https://example.com/video.mp4" required>
+                    <button class="action-btn" onclick="processVideo()">Открыть</button>
+                </div>
+                <div class="hint">Поддерживаются прямые ссылки на файлы .mp4, .webm, .ogg (ссылка должна вести именно на видеофайл, а не на страницу сайта).</div>
+                <div class="error-msg" id="error-msg"></div>
+            </div>
+
+            <div class="result-box" id="result-box">
+                <label>Просмотр:</label>
+                <div class="video-player-container">
+                    <video id="web-player" controls>
+                        Ваш браузер не поддерживает встроенный видеоплеер.
+                    </video>
+                </div>
+                <div id="preview-note" style="display:none; text-align:center; padding: 20px; color: var(--text-muted); font-size: 13px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 15px;">
+                    Предпросмотр для этого видео недоступен, но файл можно скачать ниже.
+                </div>
+
+                <label>Скачать:</label>
+                <div class="download-options">
+                    <a href="#" class="download-button" id="btn-download" target="_blank" rel="noopener">
+                        <span>Скачать файл</span>
+                        <span class="quality">Оригинал</span>
+                    </a>
+                </div>
+            </div>
+        </main>
+
+        <section class="info-section">
+            <div class="info-title">Как это работает?</div>
+            <ul>
+                <li>Вставьте прямую ссылку на видеофайл (она обычно заканчивается на .mp4, .webm и т.д.).</li>
+                <li>Нажмите «Открыть» — видео сразу проигрывается в плеере на странице.</li>
+                <li>Кнопка «Скачать» откроет файл — сохраните его через меню браузера.</li>
+            </ul>
+        </section>
+
+        <div class="adv-banner" style="margin-top: 25px;">
+            <div class="adv-title">Баннерная реклама для вашего бизнеса</div>
+            <div class="adv-desc">По вопросам сотрудничества, интеграций и покупки мест пишите нам.</div>
+            <a href="mailto:sotrivi.support@gmail.com?subject=Сотрудничество и реклама на SmotriVi" class="adv-btn">Связаться</a>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 <strong>SmotriVi</strong>. Все права защищены.</p>
+        <p style="font-size: 10px; color: #555565; margin-bottom: 10px;">Сервис не хранит и не размещает видеофайлы на своих серверах — только воспроизводит ссылки, предоставленные пользователем.</p>
+        <p>По вопросам рекламы и сотрудничества: <a href="mailto:sotrivi.support@gmail.com?subject=Рекламный запрос">sotrivi.support@gmail.com</a></p>
+    </footer>
+
+    <script>
+        function isLikelyVideoUrl(url) {
+            try {
+                var parsed = new URL(url);
+                if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+                return /\.(mp4|webm|ogg|ogv|mov|m4v)(\?.*)?$/i.test(parsed.pathname);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function processVideo() {
+            var urlInput = document.getElementById('video-url').value.trim();
+            var errorBox = document.getElementById('error-msg');
+            var resultBox = document.getElementById('result-box');
+
+            errorBox.style.display = 'none';
+            resultBox.style.display = 'none';
+
+            if (urlInput === "") {
+                errorBox.textContent = "Пожалуйста, введите ссылку на видео!";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            if (!isLikelyVideoUrl(urlInput)) {
+                errorBox.textContent = "Похоже, это не прямая ссылка на видеофайл (.mp4, .webm и т.п.). Проверьте ссылку.";
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            var player = document.getElementById('web-player');
+            var playerBox = document.querySelector('.video-player-container');
+            var previewNote = document.getElementById('preview-note');
+
+            document.getElementById('btn-download').href = urlInput;
+            resultBox.style.display = 'block';
+            playerBox.style.display = 'block';
+            previewNote.style.display = 'none';
+
+            player.onerror = function () {
+                var code = player.error ? player.error.code : null;
+                var reasons = {
+                    1: "Загрузка прервана.",
+                    2: "сервер, вероятно, блокирует показ на других сайтах или сработала защита от прямых ссылок.",
+                    3: "браузер не смог декодировать файл — неподдерживаемый кодек или повреждённый файл.",
+                    4: "сервер не отдаёт файл напрямую для встраивания (например, отдаёт его только как вложение для скачивания)."
+                };
+                errorBox.textContent = "Предпросмотр недоступен: " + (reasons[code] || "неизвестная причина.") + " Но скачать файл всё равно можно кнопкой ниже.";
+                errorBox.style.display = 'block';
+                playerBox.style.display = 'none';
+                previewNote.style.display = 'block';
+            };
+
+            player.src = urlInput;
+            player.load();
+
+            resultBox.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
